@@ -1,0 +1,83 @@
+# VIRTUAL ENVIRONMENT
+.venv/
+venv/
+env/
+ENV/
+
+# PYTHON
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# JUPYTER NOTEBOOK
+.ipynb_checkpoints
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PROJECT AUTO-GENERATED
+src/data/
+src/checkpoints/
+src/results/
+checkpoints/
+data/
+results/
+
+# LOGS & TEMPORARY
+*.log
+pipeline_output.log
+*.tmp
+*.temp
+
+# OS FILES
+.DS_Store
+Thumbs.db
+.directory
+
+# TESTING
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MYPY
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# OPTIONAL: Legacy/Experimental Files
+# Uncomment if you want git to ignore these instead of deleting them:
+# train_regularized.py
+# train_balanced.py
+# compare_models.py
+# debug_stage3.py
+# save_balanced_models.py
+# guide_anti_overfitting.py
+# test_ood_generalization.py
+# test_stage4_fix.py
+# src/neural_ode.py
+# src/config_regularized.py
