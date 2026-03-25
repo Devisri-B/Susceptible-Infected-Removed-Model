@@ -177,8 +177,8 @@ The model successfully captures the non-linear dynamics of the epidemics across 
 ![Trajectory Samples](src/results/trajectory_samples.png)
 
 **Author**
-Name: Devi Sri Bandaru
-Email: bandarudevisri.ds@gmail.com
-LinkedIn: https://linkedin.com/in/devisri-bandaru
-GitHub: https://github.com/Devisri-B
-For GSoC 2026
+- **Name**: Devi Sri Bandaru
+- **Email**: [bandarudevisri.ds@gmail.com](bandarudevisri.ds@gmail.com)
+- **LinkedIn**: [https://linkedin.com/in/devisri-bandaru](https://linkedin.com/in/devisri-bandaru)
+- **GitHub**: [https://github.com/Devisri-B](https://github.com/Devisri-B)
+- **For GSoC 2026**
