@@ -26,6 +26,7 @@ from src.sir.utils import set_seed, EarlyStopping
 from src.sir.pipeline import (
     run_stage1_simulation,
     save_stage1_data,
+    load_stage1_data,
     run_stage2_pipeline,
     save_stage2_data,
     run_stage4_symbolic_recovery,
@@ -35,6 +36,10 @@ from src.sir.pipeline import (
 )
 from src.sir.pipeline.symbolic_recovery import validate_recovered_equations
 from src.sir.models import SIR_MLP
+
+# ============ CONFIGURATION ============
+USE_STAGE1_CACHE = True  # Set to False to regenerate Stage 1 simulations (takes ~20 min)
+# Note: Only set to False if you want fresh data or changed Stage 1 configuration
 
 
 def train_balanced_mlp(loaders, datasets):
@@ -176,12 +181,29 @@ def main():
     
     start_time = time.time()
     try:
-        params, mean_traj, std_traj, t_eval = run_stage1_simulation(verbose=True)
-        save_stage1_data(params, mean_traj, std_traj, t_eval)
-        stage1_time = time.time() - start_time
-        print(f" Stage 1 completed in {stage1_time:.2f}s")
+        # Check if we should use cached Stage 1 data
+        from pathlib import Path
+        data_file = Path("src/data/stage1_simulations.pkl")
+        
+        if USE_STAGE1_CACHE and data_file.exists():
+            print(f" [CACHE] Using cached Stage 1 data...")
+            params, mean_traj, std_traj, t_eval = load_stage1_data()
+            stage1_time = time.time() - start_time
+            print(f" Stage 1 (cached) loaded in {stage1_time:.2f}s")
+        else:
+            print(f" [GENERATE] Running Gillespie simulations...")
+            if not USE_STAGE1_CACHE:
+                print(f" (Cache disabled - generating fresh data)")
+            print(f" Computing: 2000 parameters × 50 trajectories = 100,000 simulations...")
+            print(f" This will take approximately 15-20 minutes...\n")
+            params, mean_traj, std_traj, t_eval = run_stage1_simulation(verbose=True)
+            save_stage1_data(params, mean_traj, std_traj, t_eval)
+            stage1_time = time.time() - start_time
+            print(f" Stage 1 completed in {stage1_time:.2f}s")
     except Exception as e:
         print(f" Stage 1 failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
     
     # ============ STAGE 2 ============

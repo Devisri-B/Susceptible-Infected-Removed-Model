@@ -64,18 +64,20 @@ STAGE3_CONFIG = {
 STAGE4_CONFIG = {
     # PySR configuration
     "populations": 30,
-    "generations": 100,
+    "generations": 200,
     "population_size": 50,
     "max_complexity": 20,
     
     # Custom operators for epidemiology
     "binary_operators": ["plus", "sub", "mult", "div"],
-    # Unary operators: 'exp' only (removed 'log' which caused spurious log terms in I/R equations)
-    # Note: Log operator led to discoveries like dR/dt = log(I) instead of cleaner dR/dt = g*I
     "unary_operators": ["exp"], 
     
     # Sampling strategy
     "n_derivative_points": 5000,  # Evaluate derivatives at many points
+    
+    # Parameters to encourage non-constant equations
+    "complexity_penalty": 0.05,  # Penalize high complexity 
+    "alpha": 0.1,  # Pareto frontier regularization - higher = more aggressive filtering of bad solutions
     
     "timeout_in_seconds": 3600,  # Max 1 hour for symbolic regression
     "verbosity": 1,

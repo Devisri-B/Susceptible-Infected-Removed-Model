@@ -19,9 +19,6 @@ from src.sir.models import SIR_MLP
 from tqdm import tqdm
 
 
-# Note: Using SIR_MLP from src/sir.models (imported above)
-
-
 def gen_ood_data(n_points=100, seed=42):
     """Generate OOD data with β in [0.65, 0.80] (not in [0.5, 0.65] training range)."""
     

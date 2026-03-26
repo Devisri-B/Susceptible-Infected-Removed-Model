@@ -10,7 +10,7 @@ $$\frac{dS}{dt} = -\frac{\beta SI}{N}, \quad \frac{dI}{dt} = \frac{\beta SI}{N} 
 
 ## Motivation
 
-Standard epidemiological models like SIR assume constant transmission (β) and recovery (γ) rates. However, rapidly mutating pathogens, behavioral changes, and policy interventions often violate these assumptions. Automated symbolic equation discovery enables **real-time adaptation** of ODE models—rather than manually tuning parameters, this pipeline trains neural networks on recent epidemic data and automatically extracts new mathematical forms that capture current dynamics. This project demonstrates how machine learning can accelerate model discovery in infectious disease research, bridging stochastic simulations (ground truth) and interpretable symbolic equations (deployment).
+Standard epidemiological models like SIR assume constant transmission (β) and recovery (γ) rates. However, rapidly mutating pathogens, behavioral changes, and policy interventions often violate these assumptions. Automated symbolic equation discovery enables **real-time adaptation** of ODE models,rather than manually tuning parameters, this pipeline trains neural networks on recent epidemic data and automatically extracts new mathematical forms that capture current dynamics. This project demonstrates how machine learning can accelerate model discovery in infectious disease research, bridging stochastic simulations (ground truth) and interpretable symbolic equations (deployment).
 
 ## Organization Alignment: HumanAI Foundation
 
@@ -45,8 +45,8 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# For symbolic recovery (Stage 4)
-pip install pysr
+# Verify installation
+python -c "import torch; import pysr; print('Dependencies installed')"
 ```
 ## Quick Start
 
@@ -132,11 +132,14 @@ SIR/
 - **Output**: (S, I, R) :   3D compartment predictions
 - **Training**: Adam optimizer with weight_decay 0.01, early stopping (patience=8)
 
-### Stage 4: Symbolic Recovery 
-- Differentiate trained network → estimate dS/dt, dI/dt, dR/dt
-- Run **PySR** symbolic regression on (S, I, R, β, γ) → derivatives
-- Discover compact algebraic expressions (e.g., β·S·I - γ·I)
-- Requires: `pip install pysr`
+### Stage 4: Symbolic Recovery (Loss-Based Ranking)
+
+**Approach**: Discovers symbolic ODE equations from trained MLP using PySR genetic algorithm
+- **Features**: 9 engineered features (S, I, R, β, γ, S.I, S.I/N, β.S.I, γ.I) enable SIR discoveries
+- **Ranking**: Equations ranked by **test loss** (accuracy), not complexity , ensures meaningful variables
+- **Output**: Top 10 equations per compartment, loss-ranked for predictive quality
+
+**See**: [RESULTS_SUMMARY.md](src/results/RESULTS_SUMMARY.md#symbolic-recovery-stage-4) for methodology details, discovered equations, and why loss-based ranking works.
 
 ### Stage 5: Evaluation
 - **R² Score**: Goodness of fit on held-out test data
@@ -148,28 +151,21 @@ SIR/
 
 ### Gillespie Algorithm (Stage 1)
 Exact stochastic simulation of SIR epidemics:
-- **Reaction rates**: 
-  - Infection: β·S·I/N (contacts leading to transmission)
-  - Recovery: γ·I (infected individuals recovering)
-- **Jump chain**: Exponential waiting times with rates proportional to compartment sizes
+- **Reaction rates**: Infection β·S·I/N, Recovery γ·I
+- **Jump chain**: Exponential waiting times proportional to compartment sizes
 - **Output**: Stochastic trajectories averaged over 50 replicates per parameter point
 
 ### MLP Point-wise Prediction (Stage 3)
 - **Input**: (β, γ, N, I₀, t) : parameters + time point
-- **Output**: (S, I, R) : compartment values at that time
-- **Advantage**: Point-wise predictions avoid ODE solver complexity, enable fast inference
-- **Regularization**: Dropout (0.2) + L2 weight decay (0.01) prevent overfitting
-- **Result**: 86.58% average R² demonstrates excellent generalization
-
-### Symbolic Regression (Stage 4)
-- **Method**: PySR (genetic algorithm-based symbolic regression)
-- **Input**: Sampled (S, I, R, β, γ) values from MLP trajectories
-- **Discovery**: Automatic differentiation + symbolic fitting discovers dS/dt, dI/dt, dR/dt equations
-- **Output**: Human-readable expressions like "β·S·I - γ·I" matching ground truth SIR form
+- **Output**: (S, I, R) : compartment values
+- **Result**: 86.58% average R², avoiding ODE solver complexity for fast inference
 
 ## Results
 
-**Full Results Summary**: [src/results/RESULTS_SUMMARY.md](src/results/RESULTS_SUMMARY.md) - See comprehensive results!
+**Full Results Summary**: [src/results/RESULTS_SUMMARY.md](src/results/RESULTS_SUMMARY.md)
+- Detailed methodology for all 5 stages
+- Discovered symbolic equations with complexity/loss metrics
+- Full performance analysis and interpretation
 
 ### Visualizing Predictions
 The model successfully captures the non-linear dynamics of the epidemics across varying parameter regimes. Below, predictions (red dashed lines) are plotted against the Gillespie stochastic ground truth (solid blue lines) for the Susceptible, Infected, and Recovered compartments.
