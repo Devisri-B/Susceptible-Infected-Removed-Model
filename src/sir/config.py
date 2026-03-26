@@ -47,7 +47,7 @@ STAGE2_CONFIG = {
     "standardize": False,  # Add z-score standardization
 }
 
-# ============ STAGE 3: NEURAL ODE TRAINING ============
+# ============ STAGE 3: MLP TRAINING ============
 STAGE3_CONFIG = {
     "hidden_dim": 64,
     "learning_rate": 1e-3,
@@ -55,13 +55,6 @@ STAGE3_CONFIG = {
     
     "n_epochs": 50,
     "early_stopping_patience": 10,
-    
-    # ODE solver settings
-    "solver": "dopri5",
-    "rtol": 1e-4,
-    "atol": 1e-5,
-    "adjoint_rtol": 1e-4,
-    "adjoint_atol": 1e-5,
     
     "device": "cpu",  # Change to "cuda" if GPU available
     "checkpoint_every": 5,
@@ -77,7 +70,9 @@ STAGE4_CONFIG = {
     
     # Custom operators for epidemiology
     "binary_operators": ["plus", "sub", "mult", "div"],
-    "unary_operators": ["exp", "log"],
+    # Unary operators: 'exp' only (removed 'log' which caused spurious log terms in I/R equations)
+    # Note: Log operator led to discoveries like dR/dt = log(I) instead of cleaner dR/dt = g*I
+    "unary_operators": ["exp"], 
     
     # Sampling strategy
     "n_derivative_points": 5000,  # Evaluate derivatives at many points

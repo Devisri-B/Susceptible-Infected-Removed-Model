@@ -1,11 +1,13 @@
 """
 Stage 4: Symbolic Recovery using PySR
 
+Automatically discover ODE equations from trained MLP model.
+
 This stage:
-1. Generates trajectories from the trained MLP model
-2. Computes derivatives dS/dt, dI/dt, dR/dt via finite differences
+1. Generates trajectories from the trained MLP model using correct call signature: model(params, t_eval)
+2. Computes derivatives dS/dt, dI/dt, dR/dt via finite differences on MLP outputs
 3. Runs symbolic regression (PySR) to discover dynamics equations
-4. Validates recovered equations against ground truth SIR form
+4. Uses cleaned operator set (exp only, no spurious log terms)
 """
 
 import torch
@@ -26,19 +28,24 @@ def generate_trajectories_mlp(model, params, t_eval, device, n_samples=100):
     """
     Generate trajectories using MLP point-wise predictions.
     
-    For MLP, predict S(t), I(t), R(t) at each time step given parameters.
+    MLP signature: forward(params, t_eval) → [batch, time_steps, 3]
+    Predicts S(t), I(t), R(t) at each time step given (β, γ, N, I₀).
     
     Args:
-        model: SIR_MLP model
-        params: [n_param_sets, 4] – (β, γ, N, I₀)
-        t_eval: [n_times]
-        device: torch device
-        n_samples: number of trajectories to use
+        model: SIR_MLP model with correct forward(params, t_eval) signature
+        params: [n_param_sets, 4] – normalized (β, γ, N, I₀)
+        t_eval: [n_times] – evaluation time points (0 to 100)
+        device: torch device (cpu or cuda)
+        n_samples: number of parameter sets to sample
     
     Returns:
-        states: [n_data, 3] – (S, I, R) values
-        derivatives: [n_data, 3] – (dS/dt, dI/dt, dR/dt)
-        parameters: [n_data, 2] – (β, γ) values
+        states: [n_data, 3] – (S, I, R) compartment values from MLP predictions
+        derivatives: [n_data, 3] – (dS/dt, dI/dt, dR/dt) via central finite differences
+        parameters: [n_data, 2] – (β, γ) values used for each trajectory
+    
+    Notes:
+        - Uses central finite differences to compute derivatives on model outputs
+        - Derivatives are used as targets for PySR symbolic regression
     """
     
     model.eval()
@@ -66,12 +73,12 @@ def generate_trajectories_mlp(model, params, t_eval, device, n_samples=100):
             # Create input for MLP: (beta, gamma, N, I0, t) for each time
             traj = []
             for t in t_eval:
-                # MLP predicts (S, I, R) at each time given parameters
-                # This generates trajectories for derivative computation in symbolic regression
-                t_tensor = torch.tensor([[beta, gamma, N, I0_frac, t]], dtype=torch.float32).to(device)
+                # MLP predicts (S, I, R) at time t given parameters
+                params_single = torch.tensor([[beta, gamma, N, I0_frac]], dtype=torch.float32).to(device)
+                t_single = torch.tensor([t], dtype=torch.float32).to(device)
                 
                 try:
-                    pred = model(t_tensor).detach().cpu().numpy()[0]
+                    pred = model(params_single, t_single).detach().cpu().numpy()[0, 0]  # [batch=1, time=1, 3]
                     traj.append(pred)
                 except:
                     # If MLP fails, use ground truth SIR
